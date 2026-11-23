@@ -164,7 +164,7 @@ h2 { font-size: clamp(3.3rem, 7vw, 6.35rem); }
   background: radial-gradient(ellipse at 50% 105%, #f5236c24, transparent 62%), var(--ink);
   border-bottom: 1px solid #ffffff24;
 }
-.life-hero-content { padding-block: clamp(4rem, 9vw, 7.5rem); }
+.life-hero-content { padding-block: clamp(3.25rem, 7vw, 6rem) clamp(1rem, 3vw, 2.2rem); }
 .life-hero h1 { font-size: clamp(3.45rem, 9vw, 8rem); text-wrap: balance; }
 .life-hero h1 em { display: inline-block; }
 .life-hero .lede { max-width: 33rem; margin-inline: auto; text-wrap: pretty; }
@@ -198,6 +198,14 @@ h2 { font-size: clamp(3.3rem, 7vw, 6.35rem); }
 }
 .editorial-art img { width: 100%; height: 100%; object-fit: cover; }
 .editorial-art.in-view img { animation: editorial-drift 4.6s cubic-bezier(.2, .65, .3, 1) both; }
+.editorial-art.life-hero-art {
+  width: min(100%, 55rem);
+  aspect-ratio: 3 / 1;
+  margin: clamp(1.1rem, 3vw, 2rem) auto 0;
+  border-radius: 0;
+  background: transparent;
+  mask-image: radial-gradient(ellipse 58% 67% at center, black 63%, transparent 100%);
+}
 .legacy-art { aspect-ratio: 6 / 5; background: #0b0b0b; }
 .legacy-visual { display: grid; gap: .85rem; }
 .feature-art { box-shadow: 0 1.1rem 4rem #00000055; }
