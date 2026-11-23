@@ -158,7 +158,7 @@ h2 { font-size: clamp(3.3rem, 7vw, 6.35rem); }
   .roles, .feature-grid { grid-template-columns: 1fr; }
 }
 
-/* Whole-child life area guide */
+/* Whole-child life areas */
 .life-hero {
   text-align: center;
   background: radial-gradient(ellipse at 50% 105%, #f5236c24, transparent 62%), var(--ink);
