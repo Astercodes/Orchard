@@ -43,15 +43,25 @@ async function api(path, data) {
 const goals = (action, data = {}) => api("/api/goals", { action, ...data });
 
 function login() {
-  const credentials = field("Email", "email", "", "email", true, 'autocomplete="username"') +
-    field("Password", "password", "", "password", true, 'autocomplete="current-password"');
-  return `<section class="auth panel"><h1>Sign in</h1><p>Open your Orchard Goals workspace.</p>
-    ${form("login", credentials, "Sign in")}
-    ${expandable("Set up a parent account", form("register",
-      field("Parent setup code", "setupCode", "", "password", true, 'autocomplete="off"') +
-      field("Parent email", "email", "", "email", true, 'autocomplete="username"') +
-      field("Choose a password", "password", "", "password", true, 'autocomplete="new-password" minlength="12"'),
-      "Create parent account"))}</section>`;
+  const creating = location.hash === "#create-account";
+  const email = field("Email address", "email", "", "email", true, 'autocomplete="username"');
+  const credentials = creating
+    ? email + field("Password", "password", "", "password", true, 'autocomplete="new-password" minlength="12" aria-describedby="password-hint"') +
+      '<small id="password-hint">Use at least 12 characters.</small>' +
+      field("Parent setup code", "setupCode", "", "password", true, 'autocomplete="off"')
+    : email + field("Password", "password", "", "password", true, 'autocomplete="current-password"');
+  return `<section class="auth" aria-labelledby="auth-title">
+    <div class="auth-art" aria-hidden="true">
+      <img src="/assets/orchard-fruit.webp" alt="" width="1536" height="864">
+    </div>
+    <div class="auth-content">
+      <p class="auth-label">Orchard Goals</p>
+      <h1 id="auth-title" tabindex="-1">${creating ? "Create your parent account" : "Sign in to Orchard"}</h1>
+      <p>${creating ? "Use your parent setup code to open your family’s Goals workspace." : "Pick up where you left off with your family’s goals and habits."}</p>
+      ${form(creating ? "register" : "login", credentials, creating ? "Create parent account" : "Sign in")}
+      <p class="auth-switch">${creating ? 'Already have an account? <a href="#sign-in">Sign in</a>' : 'New to Orchard? <a href="#create-account">Create a parent account</a>'}</p>
+    </div>
+  </section>`;
 }
 
 const monthInput = () => `<label>Planning month<input id="period" type="month" value="${safe(state.period)}" required></label>`;
@@ -211,6 +221,7 @@ async function render() {
 async function submit(action, data) {
   if (["login", "register", "child"].includes(action)) {
     state.account = await api(`/api/${action}`, data);
+    if (action !== "child" && location.hash) history.replaceState(null, "", location.pathname + location.search);
     return;
   }
   const { id, on, notes, week, ...rest } = data;
@@ -279,6 +290,12 @@ document.addEventListener("change", (event) => {
   } else if (event.target.id === "annual-area") {
     void run(() => { state.annualArea = event.target.value; });
   }
+});
+
+window.addEventListener("hashchange", () => {
+  if (state.account) return;
+  notice.textContent = "";
+  void render().then(() => document.querySelector("#auth-title")?.focus());
 });
 
 void run(async () => Object.assign(state, await api("/api/session")));
