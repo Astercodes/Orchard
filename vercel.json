@@ -1,6 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": null,
-  "outputDirectory": "."
+  "buildCommand": "node build.mjs",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/orchard.mjs": { "includeFiles": "{portal/portal.html,portal/portal.css,portal/portal-client.js,assets/mark.svg}" }
+  },
+  "redirects": [
+    { "source": "/portal", "destination": "/portal/", "permanent": false }
+  ],
+  "rewrites": [
+    { "source": "/api/:route(session|login|register|logout|child|goals)", "destination": "/api/orchard?route=:route" }
+  ]
 }
