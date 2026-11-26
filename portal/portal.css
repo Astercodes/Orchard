@@ -41,7 +41,12 @@ textarea { min-height:4.2rem; resize:vertical; }
 .meta { color:#ff9bc1; font-weight:650; }
 .auth { display:grid; grid-template-columns:minmax(0, 1.1fr) minmax(0, 1fr); max-width:62rem; margin:clamp(.5rem, 3vw, 2rem) auto 0; overflow:hidden; background:var(--card); border:1px solid var(--line); border-radius:1.5rem; }
 .auth-art { position:relative; min-height:100%; background:#0b0b0b; overflow:hidden; }
-.auth-art img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:57% center; }
+.auth-art img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; animation:arrival 4.4s cubic-bezier(.2,.65,.28,1) both; }
+.auth-art::after { content:""; position:absolute; inset:0; background:linear-gradient(135deg, #f5236c14, transparent 48%); pointer-events:none; }
+@keyframes arrival {
+  from { transform:scale(1.11) translateY(2%); opacity:.72; }
+  to { transform:scale(1.015); opacity:1; }
+}
 .auth-content { padding:clamp(1.4rem, 4vw, 3rem); }
 .auth-label { margin-bottom:.9rem; color:#ff92b8; font-weight:750; }
 .auth h1 { margin-bottom:.8rem; font-size:clamp(2.25rem, 4.3vw, 3.5rem); line-height:1.03; text-wrap:balance; }
@@ -57,4 +62,4 @@ textarea { min-height:4.2rem; resize:vertical; }
 }
 #account { display:flex; gap:.6rem; align-items:center; flex-wrap:wrap; }
 @media (max-width:600px) { .grid { grid-template-columns:1fr; } .hero { display:block; } .hero label { margin-top:.65rem; } }
-@media (prefers-reduced-motion:reduce) { * { scroll-behavior:auto; } }
+@media (prefers-reduced-motion:reduce) { * { scroll-behavior:auto; } .auth-art img { animation:none; } }

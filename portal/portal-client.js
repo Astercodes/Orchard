@@ -52,12 +52,12 @@ function login() {
     : email + field("Password", "password", "", "password", true, 'autocomplete="current-password"');
   return `<section class="auth" aria-labelledby="auth-title">
     <div class="auth-art" aria-hidden="true">
-      <img src="/assets/orchard-fruit.webp" alt="" width="1536" height="864">
+      <img src="/assets/portal-sign-in.webp" alt="" width="960" height="1200" fetchpriority="high">
     </div>
     <div class="auth-content">
-      <p class="auth-label">Orchard Goals</p>
+      <p class="auth-label">Orchard Portal</p>
       <h1 id="auth-title" tabindex="-1">${creating ? "Create your parent account" : "Sign in to Orchard"}</h1>
-      <p>${creating ? "Use your parent setup code to open your family’s Goals workspace." : "Pick up where you left off with your family’s goals and habits."}</p>
+      <p>${creating ? "Use your parent setup code to create your family’s Orchard account." : "Sign in to your family’s Orchard account."}</p>
       ${form(creating ? "register" : "login", credentials, creating ? "Create parent account" : "Sign in")}
       <p class="auth-switch">${creating ? 'Already have an account? <a href="#sign-in">Sign in</a>' : 'New to Orchard? <a href="#create-account">Create a parent account</a>'}</p>
     </div>
@@ -211,7 +211,7 @@ async function render() {
   const view = { monthly, annual, sprint, milestone, experience, habits }[active];
   const content = await view();
   if (version !== renderVersion) return;
-  app.innerHTML = `<div class="hero"><div><h1>${parent ? "Goals" : "My habits"}</h1>
+  app.innerHTML = `<div class="hero"><div><p class="auth-label">Orchard Portal</p><h1>${parent ? "Goals" : "My habits"}</h1>
     <p>${parent ? "Plan what matters and make time to review it." : "Mark the days you practiced each habit."}</p></div>${monthInput()}</div>
     ${parent ? `<nav aria-label="Goals tools">${tabs.map(([key, label]) => `<button type="button" class="tab" data-tab="${key}"
       ${key === active ? 'aria-current="page"' : ""}>${label}</button>`).join("")}</nav>` : ""}
