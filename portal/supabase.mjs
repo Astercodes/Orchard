@@ -34,6 +34,11 @@ export function createSupabase({ url, publicKey, secretKey, fetcher = fetch }) {
   const statePath = "/rest/v1/orchard_goal_state";
 
   return {
+    signUp(email, password, redirect) {
+      return request(`/auth/v1/signup?redirect_to=${encodeURIComponent(redirect)}`, {
+        body: { email, password, data: { orchard_parent_signup: true } },
+      });
+    },
     createAccount(email, password, role, familyId) {
       return admin("/auth/v1/admin/users", {
         body: { email, password, email_confirm: true, app_metadata: { orchard: { role, family_id: familyId } } },

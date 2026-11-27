@@ -1,4 +1,3 @@
-import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { createServer } from "node:http";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -12,7 +11,6 @@ const staticFiles = new Map([
   ["/portal-client.js", ["text/javascript", "./portal-client.js"]],
   ["/assets/mark.svg", ["image/svg+xml", "../assets/mark.svg"]],
 ]);
-const hash = (value) => createHash("sha256").update(value).digest("hex");
 const cookie = (token, seconds) => `orchard_session=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${seconds}`;
 
 function fail(status, message) {
@@ -72,7 +70,7 @@ const calls = {
 
 const reads = new Set(["monthlyGoals", "monthlyCheckInStatus", "annualSummary", "annualPlan", "listPlans", "habitTracker"]);
 
-export function createPortal({ supabase, setupCode = randomBytes(16).toString("hex"), publicOrigin }) {
+export function createPortal({ supabase, publicOrigin }) {
   const assets = new Map([...staticFiles].map(([path, [type, file]]) =>
     [path, [type, readFileSync(fileURLToPath(new URL(file, import.meta.url)))]]));
   const attempts = new Map();
@@ -118,15 +116,24 @@ export function createPortal({ supabase, setupCode = randomBytes(16).toString("h
       const email = emailAddress(input.email);
       const secret = password(input.password, path === "/api/login" ? 1 : 12);
       if (path === "/api/register") {
-        if (!timingSafeEqual(Buffer.from(hash(String(input.setupCode ?? ""))), Buffer.from(hash(setupCode)))) {
-          fail(403, "Enter your Orchard parent setup code.");
+        try {
+          const redirect = `${publicOrigin ?? `http://${req.headers.host}`}/portal/`;
+          const signup = await supabase.signUp(email, secret, redirect);
+          if (signup?.access_token) fail(503, "Email verification is temporarily unavailable.");
+        } catch (error) {
+          if (["email_exists", "user_already_exists"].includes(error.code)) return null;
+          if (error.code === "weak_password") fail(400, "Choose a stronger password.");
+          if (error.upstreamStatus === 429) fail(429, "Please wait before requesting another email.");
+          if (error.code === "email_address_not_authorized") fail(503, "Verification emails are currently limited. Please try again later.");
+          throw error;
         }
-        await provision(email, secret, "parent", randomUUID());
+        return null;
       }
       let session;
       try {
         session = await supabase.login(email, secret);
       } catch (error) {
+        if (error.code === "email_not_confirmed") fail(401, "Confirm your email before signing in.");
         if ([400, 401, 422].includes(error.upstreamStatus)) fail(401, "Incorrect email or password.");
         if (error.upstreamStatus === 429) fail(429, "Too many sign-in attempts. Try again shortly.");
         throw error;
@@ -190,7 +197,7 @@ export function createPortal({ supabase, setupCode = randomBytes(16).toString("h
       res.end(JSON.stringify({ error: error.status ? error.message : "Something went wrong." }));
     }
   };
-  return { server: createServer(handler), handler, setupCode };
+  return { server: createServer(handler), handler };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
@@ -199,8 +206,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     publicKey: process.env.SUPABASE_PUBLISHABLE_KEY,
     secretKey: process.env.SUPABASE_SECRET_KEY,
   });
-  const { server, setupCode } = createPortal({ supabase, setupCode: process.env.ORCHARD_SETUP_CODE || undefined });
+  const { server } = createPortal({ supabase });
   server.listen(Number(process.env.PORT ?? 8787), "127.0.0.1", () => {
-    console.log(`Orchard portal at http://127.0.0.1:${server.address().port}\nParent setup code: ${setupCode}`);
+    console.log(`Orchard portal at http://127.0.0.1:${server.address().port}`);
   });
 }

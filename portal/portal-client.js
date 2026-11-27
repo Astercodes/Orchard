@@ -47,8 +47,7 @@ function login() {
   const email = field("Email address", "email", "", "email", true, 'autocomplete="username"');
   const credentials = creating
     ? email + field("Password", "password", "", "password", true, 'autocomplete="new-password" minlength="12" aria-describedby="password-hint"') +
-      '<small id="password-hint">Use at least 12 characters.</small>' +
-      field("Parent setup code", "setupCode", "", "password", true, 'autocomplete="off"')
+      '<small id="password-hint">Use at least 12 characters.</small>'
     : email + field("Password", "password", "", "password", true, 'autocomplete="current-password"');
   return `<section class="auth" aria-labelledby="auth-title">
     <div class="auth-art" aria-hidden="true">
@@ -57,7 +56,7 @@ function login() {
     <div class="auth-content">
       <p class="auth-label">Orchard Portal</p>
       <h1 id="auth-title" tabindex="-1">${creating ? "Create your parent account" : "Sign in to Orchard"}</h1>
-      <p>${creating ? "Use your parent setup code to create your family’s Orchard account." : "Sign in to your family’s Orchard account."}</p>
+      <p>${creating ? "Create your family’s Orchard account, then confirm your email to sign in." : "Sign in to your family’s Orchard account."}</p>
       ${form(creating ? "register" : "login", credentials, creating ? "Create parent account" : "Sign in")}
       <p class="auth-switch">${creating ? 'Already have an account? <a href="#sign-in">Sign in</a>' : 'New to Orchard? <a href="#create-account">Create a parent account</a>'}</p>
     </div>
@@ -219,7 +218,12 @@ async function render() {
 }
 
 async function submit(action, data) {
-  if (["login", "register", "child"].includes(action)) {
+  if (action === "register") {
+    await api("/api/register", data);
+    history.replaceState(null, "", "#sign-in");
+    return "Check your email for a confirmation link. If you already have an account, you can sign in.";
+  }
+  if (["login", "child"].includes(action)) {
     state.account = await api(`/api/${action}`, data);
     if (action !== "child" && location.hash) history.replaceState(null, "", location.pathname + location.search);
     return;
@@ -254,9 +258,9 @@ async function run(operation, control, message = "") {
   if (control) control.disabled = true;
   notice.textContent = "";
   try {
-    await operation();
+    const result = await operation();
     await render();
-    notice.textContent = message;
+    notice.textContent = typeof result === "string" ? result : message;
   } catch (error) {
     notice.textContent = error.message;
   } finally {
@@ -298,4 +302,12 @@ window.addEventListener("hashchange", () => {
   void render().then(() => document.querySelector("#auth-title")?.focus());
 });
 
-void run(async () => Object.assign(state, await api("/api/session")));
+const authReturn = new URLSearchParams(location.hash.slice(1));
+let authMessage = "";
+if (authReturn.has("access_token") || authReturn.has("error")) {
+  history.replaceState(null, "", location.pathname + location.search);
+  authMessage = authReturn.has("error")
+    ? "The confirmation link is invalid or expired. Try signing up again."
+    : "Email confirmed. Sign in to continue.";
+}
+void run(async () => Object.assign(state, await api("/api/session")), undefined, authMessage);

@@ -1,4 +1,3 @@
-import { createHmac } from "node:crypto";
 import { createPortal } from "../portal/server.mjs";
 import { createSupabase } from "../portal/supabase.mjs";
 
@@ -15,10 +14,8 @@ export default function orchard(req, res) {
       return res.end(JSON.stringify({ error: "Orchard is being configured." }));
     }
     const supabase = createSupabase({ url, publicKey, secretKey });
-    const setupCode = process.env.ORCHARD_SETUP_CODE ||
-      createHmac("sha256", secretKey).update("orchard-production-parent-setup-v1").digest("hex").slice(0, 32);
     ({ handler } = createPortal({
-      supabase, setupCode, publicOrigin: "https://orchard-iota-blue.vercel.app",
+      supabase, publicOrigin: "https://orchard-iota-blue.vercel.app",
     }));
   }
   return handler(req, res, `/api/${route}`);
